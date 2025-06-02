@@ -1,0 +1,149 @@
+    <template id="icon-One">
+      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor">
+        <path
+          d="M15 4a1 1 0 1 0 0 2V4zm0 11v-1a1 1 0 0 0-1 1h1zm0 4l-.707.707A1 1 0 0 0 16 19h-1zm-4-4l.707-.707A1 1 0 0 0 11 14v1zm-4.707-1.293a1 1 0 0 0-1.414 1.414l1.414-1.414zm-.707.707l-.707-.707.707.707zM9 11v-1a1 1 0 0 0-.707.293L9 11zm-4 0h1a1 1 0 0 0-1-1v1zm0 4H4a1 1 0 0 0 1.707.707L5 15zm10-9h2V4h-2v2zm2 0a1 1 0 0 1 1 1h2a3 3 0 0 0-3-3v2zm1 1v6h2V7h-2zm0 6a1 1 0 0 1-1 1v2a3 3 0 0 0 3-3h-2zm-1 1h-2v2h2v-2zm-3 1v4h2v-4h-2zm1.707 3.293l-4-4-1.414 1.414 4 4 1.414-1.414zM11 14H7v2h4v-2zm-4 0c-.276 0-.525-.111-.707-.293l-1.414 1.414C5.42 15.663 6.172 16 7 16v-2zm-.707 1.121l3.414-3.414-1.414-1.414-3.414 3.414 1.414 1.414zM9 12h4v-2H9v2zm4 0a3 3 0 0 0 3-3h-2a1 1 0 0 1-1 1v2zm3-3V3h-2v6h2zm0-6a3 3 0 0 0-3-3v2a1 1 0 0 1 1 1h2zm-3-3H3v2h10V0zM3 0a3 3 0 0 0-3 3h2a1 1 0 0 1 1-1V0zM0 3v6h2V3H0zm0 6a3 3 0 0 0 3 3v-2a1 1 0 0 1-1-1H0zm3 3h2v-2H3v2zm1-1v4h2v-4H4zm1.707 4.707l.586-.586-1.414-1.414-.586.586 1.414 1.414z"
+        />
+      </svg>
+    </template>
+    <template id="drop-template">
+      <div class="dropdown" style="" ref="dropdown">
+        <button v-if="!opened" type="button" @click="open()">
+          <div class="dropdown-button">
+            <span
+              v-if="hasComponent(modelValue)"
+              v-scope="Icon({icon: getOptionComponent(modelValue)})"
+            ></span
+            ><span>{{ getOptionString(modelValue) }}</span><span class="append">▾</span>
+          </div>
+        </button>
+
+        <div
+          v-if="opened"
+          class="dropdown-menu"
+          tabindex="-1"
+          v-on:blur="setTimeout(() => { close() }, 300)"
+          @keydown="onPressDn"
+          autofocus
+        >
+          <ul>
+            <li v-for="option in options" :key="option.value">
+              <button type="button" @click="changeValue(option)">
+                <div class="dropdown-button">
+                  <span v-if="hasComponent(modelValue)" v-scope="Icon({icon: option.icon})"></span
+                  ><span>{{ getOptionString(option.value) }}</span
+                  ><span v-if="option.value === modelValue" class="append">✓</span
+                  ><span v-if="option.value !== modelValue" class="append">&nbsp;</span>
+                </div>
+              </button>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </template>
+
+    <script type="module">
+      import { createApp } from 'https://unpkg.com/petite-vue?module'
+
+      function Drop(props) {
+        return {
+          $template: '#drop-template',
+          opened: false,
+          modelValue: props.value ? props.value : 'option1',
+          options: props.options
+            ? props.options
+            : [
+                { value: 'option1', label: 'Option 1', icon: null },
+                { value: 'option2', label: 'Option 2', icon: null },
+              ],
+          open() {
+            this.opened = true
+            this.$nextTick(() => {
+              const menu = document.querySelector('.dropdown-menu')
+              if (menu) {
+                menu.focus()
+              }
+            })
+          },
+          close() {
+            this.$nextTick(() => {
+              this.opened = false
+            })
+          },
+          changeValue(option) {
+            this.modelValue = option.value
+            this.close()
+          },
+          hasComponent(value) {
+            let retVal = false
+            if (this.options) {
+              this.options.forEach((element) => {
+                if (element.value === value && element.icon) {
+                  retVal = true
+                }
+              })
+            }
+            return retVal
+          },
+          getOptionString(value) {
+            let retVal = ''
+            if (this.options) {
+              this.options.forEach((element) => {
+                if (element.value === value) {
+                  retVal = element.label
+                }
+              })
+            }
+            return retVal
+          },
+          getOptionComponent(value) {
+            let retVal = null
+            if (this.options) {
+              this.options.forEach((element) => {
+                if (element.value === value && element.icon) {
+                  retVal = element.icon
+                }
+              })
+            }
+            return retVal
+          },
+          onPressDn(event) {
+            console.log('Key pressed:', event.key)
+            if (event.key === 'ArrowUp' || event.key === 'ArrowDown') {
+              event.preventDefault()
+              if (this.options) {
+                let currentOption = 0
+                for (let i = 0; i < this.options.length; i++) {
+                  if (this.options[i].value === this.modelValue) {
+                    currentOption = i
+                    break
+                  }
+                }
+
+                let nextIndex = currentOption + (event.key === 'ArrowDown' ? 1 : -1)
+                if (nextIndex < 0) nextIndex = this.options.length - 1
+                if (nextIndex >= this.options.length) nextIndex = 0
+                this.modelValue = this.options[nextIndex].value
+              }
+            } else {
+              event.preventDefault()
+              this.close()
+            }
+          },
+        }
+      }
+
+      function Icon(props) {
+        return {
+          $template: '#' + props.icon,
+        }
+      }
+
+      if (typeof createApp === 'undefined') {
+        console.error('Petite Vue is not loaded.')
+      } else {
+        createApp({
+          Drop,
+          Icon,
+        }).mount()
+      }
+    </script>
